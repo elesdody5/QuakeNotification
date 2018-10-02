@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "150291694782",
+    "firebase_url": "https://quakenotification-b476b.firebaseio.com",
+    "project_id": "quakenotification-b476b",
+    "storage_bucket": "quakenotification-b476b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:150291694782:android:168f8b936f0cdd04",
+        "android_client_info": {
+          "package_name": "com.example.android.quakenotification"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "150291694782-pm7s5d5u8i1277bv8pfjjb4hl04b6qq0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.android.quakenotification",
+            "certificate_hash": "e5a23de2f421a00d44d573a7c530c32b8aa2dfac"
+          }
+        },
+        {
+          "client_id": "150291694782-8vruaieo6f9p93f97o3b41lmtfj9aqko.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBL_uub1h6oM4fi3VRiDU0ltwaTbL1SKIc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "150291694782-8vruaieo6f9p93f97o3b41lmtfj9aqko.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
