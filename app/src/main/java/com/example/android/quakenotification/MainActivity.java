@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        DevicesList = new ArrayList<>();
+       DevicesList = new ArrayList<>();
         connect = findViewById(R.id.connect_switch);
         mDrawerLayout =findViewById(R.id.drawer_layout);
         Toolbar toolbar = findViewById(R.id.toolbar);
