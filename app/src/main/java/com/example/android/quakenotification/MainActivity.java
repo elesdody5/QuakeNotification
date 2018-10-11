@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -23,19 +25,28 @@ import android.widget.Switch;
 import android.support.design.widget.Snackbar;
 import android.widget.Toast;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity  implements AdapterView.OnItemClickListener{
-    private static final  String Tag = MainActivity.class.getSimpleName();
+public class MainActivity extends AppCompatActivity  implements AdapterView.OnItemClickListener {
+    private static final String Tag = MainActivity.class.getSimpleName();
     BluetoothAdapter mBluetoothAdapter;
     private MenuItem menuItem;
-
+    private FirebaseDatabase mDatabase;
+    private DatabaseReference mDatabaseReference;
     Switch connect;
     private ArrayList<BluetoothDevice> DevicesList;
     private ListView listDeviceView;
     listDevicesAdapter adapter;
     private DrawerLayout mDrawerLayout;
+    private ChildEventListener mChildEventListener;
+
     private BluetoothConnectionService mBluetoothConnectionService;
     private static final UUID MY_UUID_INSECURE =
             UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
@@ -48,6 +59,7 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
             testBluetoothStatue(context, intent);
         }
     };
+
     @Override
     protected void onDestroy() {
 
@@ -55,13 +67,15 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
 
         unregisterReceiver(mReceiver);
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-       DevicesList = new ArrayList<>();
+        createFireBaseDataBase();
+        DevicesList = new ArrayList<>();
         connect = findViewById(R.id.connect_switch);
-        mDrawerLayout =findViewById(R.id.drawer_layout);
+        mDrawerLayout = findViewById(R.id.drawer_layout);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionbar = getSupportActionBar();
@@ -74,7 +88,6 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
                     public boolean onNavigationItemSelected(MenuItem item) {
                         // set item as selected to persist highlight
                         menuItem = item;
-
 
 
                         int id = item.getItemId();
@@ -96,15 +109,15 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
                 });
         //Broadcast when bound state change (pairing)
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        listDeviceView.setOnItemClickListener(this);
+       listDeviceView.setOnItemClickListener(this);
         registerReceiver(mReceiver, filter);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         connect.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked)
-                    startBTConnection(mBTdevice,MY_UUID_INSECURE);
+                if (isChecked)
+                    startBTConnection(mBTdevice, MY_UUID_INSECURE);
             }
         });
     }
@@ -112,16 +125,16 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
     private void startBTConnection(BluetoothDevice device, UUID uuid) {
 
         Log.d(Tag, "startBTConnection: Initializing RFCOM Bluetooth Connection.");
-        if (device==null) {
+        if (device == null) {
             Toast.makeText(this, "Choose device ", Toast.LENGTH_SHORT).show();
             connect.setChecked(false);
-        }
-        else {
+        } else {
             mBluetoothConnectionService.startClient(device, uuid);
         }
 
 
     }
+
     private void testBluetoothStatue(Context context, Intent intent) {
         String action = intent.getAction();
         if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
@@ -144,7 +157,7 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
             //if (!DevicesList.contains(device))
             DevicesList.add(device);
-            adapter = new listDevicesAdapter(context,R.layout.list_devices,DevicesList);
+            adapter = new listDevicesAdapter(context, R.layout.list_devices, DevicesList);
 
             // Apply the adapter to the listview
             listDeviceView.setAdapter(adapter);
@@ -152,6 +165,7 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
 
         }
     }
+
     private void changeBluetooth() {
 
         if (menuItem.isChecked()) {
@@ -179,40 +193,72 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
     private void scanDevices() {
 
         // Cancel discovery because it otherwise slows down the connection.
-        if(mBluetoothAdapter.isDiscovering())
-        {
+        if (mBluetoothAdapter.isDiscovering()) {
             mBluetoothAdapter.cancelDiscovery();
             mBluetoothAdapter.startDiscovery();
-            IntentFilter decoverDevicesIntent= new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(mReceiver,decoverDevicesIntent);
-        }
-        else
-        {
+            IntentFilter decoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            registerReceiver(mReceiver, decoverDevicesIntent);
+        } else {
             // to check manifest permission
             /* checkBTPermission();*/
             // need permission if api greater than lollipop
-            Log.d(Tag,"listDevice");
+            Log.d(Tag, "listDevice");
             mBluetoothAdapter.startDiscovery();
-            IntentFilter decoverDevicesIntent= new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(mReceiver,decoverDevicesIntent);
+            IntentFilter decoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            registerReceiver(mReceiver, decoverDevicesIntent);
         }
         Snackbar.make(getWindow().getDecorView().findViewById(android.R.id.content), "Scanning", Snackbar.LENGTH_LONG).show();
 
     }
+
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int i, long id) {
         mBluetoothAdapter.cancelDiscovery();
         String name = DevicesList.get(i).getName();
-        String  address = DevicesList.get(i).getAddress();
-        Log.d(Tag,"name "+name + "address"+address);
+        String address = DevicesList.get(i).getAddress();
+        Log.d(Tag, "name " + name + "address" + address);
 
         // to check version must greater than jelly bean (not important her)
-        if(Build.VERSION.SDK_INT>Build.VERSION_CODES.JELLY_BEAN_MR2)
-        {
-            Log.d(Tag,"Trying to pairing with "+name);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            Log.d(Tag, "Trying to pairing with " + name);
             DevicesList.get(i).createBond();
-            mBTdevice =DevicesList.get(i);
+            mBTdevice = DevicesList.get(i);
         }
-        mBluetoothConnectionService= new BluetoothConnectionService(this);
+        mBluetoothConnectionService = new BluetoothConnectionService(this);
+    }
+
+    private void createFireBaseDataBase() {
+        mDatabase = FirebaseDatabase.getInstance();
+        mDatabaseReference = mDatabase.getReference().child("earthquake");
+        mDatabaseReference.push().setValue(new Earhquake(5, "egypt", "high"));
+        mChildEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Earhquake earhquake = (Earhquake) dataSnapshot.getValue(Earhquake.class);
+                NotificationUtilites.showNotification(earhquake, MainActivity.this);
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        };
+        mDatabaseReference.addChildEventListener(mChildEventListener);
     }
 }
+

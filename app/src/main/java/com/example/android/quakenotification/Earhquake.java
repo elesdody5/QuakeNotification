@@ -8,7 +8,8 @@ public class Earhquake {
   private  int magnitude ;
   private  String location;
   private  String body ;
-
+  public  Earhquake()
+  {}
     public Earhquake(int magnitude, String location, String body) {
         this.magnitude = magnitude;
         this.location = location;
