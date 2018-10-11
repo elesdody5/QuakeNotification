@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -22,6 +23,9 @@ import android.widget.ListView;
 import android.widget.Switch;
 import android.support.design.widget.Snackbar;
 import android.widget.Toast;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -40,6 +44,10 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
     private static final UUID MY_UUID_INSECURE =
             UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
     private BluetoothDevice mBTdevice;
+    // Write a message to the database
+    FirebaseDatabase database ;
+    DatabaseReference myRef ;
+
 
     // Create a BroadcastReceiver for ACTION_FOUND.
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -62,7 +70,10 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
        DevicesList = new ArrayList<>();
         connect = findViewById(R.id.connect_switch);
         mDrawerLayout =findViewById(R.id.drawer_layout);
+        listDeviceView =  findViewById(R.id.list_device_view);
         Toolbar toolbar = findViewById(R.id.toolbar);
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("message");
         setSupportActionBar(toolbar);
         ActionBar actionbar = getSupportActionBar();
         actionbar.setDisplayHomeAsUpEnabled(true);
@@ -215,4 +226,52 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
         }
         mBluetoothConnectionService= new BluetoothConnectionService(this);
     }
+    @Override
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                mDrawerLayout.openDrawer(GravityCompat.START);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+    public void sendToserver(String incomingMessage) {
+        int magnitude=Integer.parseInt(incomingMessage);
+        String messageTitle =null;
+        String messagebody =null;
+        if((magnitude>=6&&magnitude<10)||(magnitude>=11&&magnitude<=14))
+        {
+            messageTitle=getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[0];
+            messagebody=getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[1];
+        }
+        else if((magnitude>=4&&magnitude<6)||(magnitude>=15&&magnitude<=16))
+        {
+            messageTitle=getResources().getStringArray(R.array.or5or4or15or16)[0];
+            messagebody=getResources().getStringArray(R.array.or5or4or15or16)[1];
+
+        }
+        else if((magnitude==3)||(magnitude == 17))
+        {
+            messageTitle=getResources().getStringArray(R.array.or3or17)[0];
+            messagebody=getResources().getStringArray(R.array.or3or17)[1];
+
+        }
+        else if((magnitude==1||magnitude==2)||(magnitude==18||magnitude==19))
+        {
+            messageTitle=getResources().getStringArray(R.array.or2or1or18or19)[0];
+            messagebody=getResources().getStringArray(R.array.or2or1or18or19)[1];
+
+        }
+        else if((magnitude==0||magnitude>=20))
+        {
+            messageTitle=getResources().getStringArray(R.array.or0or20ormorethan20)[0];
+            messagebody=getResources().getStringArray(R.array.or0or20ormorethan20)[1];
+
+        }
+        Earthquake earthquake = new Earthquake(magnitude,null,messageTitle,messagebody);
+        myRef.child("EarthQuake").setValue(earthquake);
+
+    }
+
 }
