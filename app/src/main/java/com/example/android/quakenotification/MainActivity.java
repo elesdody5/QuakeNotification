@@ -1,13 +1,22 @@
 package com.example.android.quakenotification;
 
+import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -24,16 +33,33 @@ import android.widget.Switch;
 import android.support.design.widget.Snackbar;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity  implements AdapterView.OnItemClickListener{
-    private static final  String Tag = MainActivity.class.getSimpleName();
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
+    private static final String Tag = MainActivity.class.getSimpleName();
     BluetoothAdapter mBluetoothAdapter;
     private MenuItem menuItem;
+    private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 111;
+    private GoogleApiClient mGoogleApiClient;
+    private static final int PLACE_PICKER_REQUEST = 1;
+
+
+
 
     Switch connect;
     private ArrayList<BluetoothDevice> DevicesList;
@@ -45,8 +71,9 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
             UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
     private BluetoothDevice mBTdevice;
     // Write a message to the database
-    FirebaseDatabase database ;
-    DatabaseReference myRef ;
+    FirebaseDatabase database;
+    DatabaseReference myRef;
+
 
 
     // Create a BroadcastReceiver for ACTION_FOUND.
@@ -56,6 +83,7 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
             testBluetoothStatue(context, intent);
         }
     };
+
     @Override
     protected void onDestroy() {
 
@@ -63,14 +91,19 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
 
         unregisterReceiver(mReceiver);
     }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-       DevicesList = new ArrayList<>();
+        // to check location permission
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                PERMISSIONS_REQUEST_FINE_LOCATION);
+        DevicesList = new ArrayList<>();
         connect = findViewById(R.id.connect_switch);
-        mDrawerLayout =findViewById(R.id.drawer_layout);
-        listDeviceView =  findViewById(R.id.list_device_view);
+        mDrawerLayout = findViewById(R.id.drawer_layout);
+        listDeviceView = findViewById(R.id.list_device_view);
         Toolbar toolbar = findViewById(R.id.toolbar);
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("message");
@@ -85,7 +118,6 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
                     public boolean onNavigationItemSelected(MenuItem item) {
                         // set item as selected to persist highlight
                         menuItem = item;
-
 
 
                         int id = item.getItemId();
@@ -114,25 +146,37 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
         connect.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked)
-                    startBTConnection(mBTdevice,MY_UUID_INSECURE);
+                if (isChecked)
+                    startBTConnection(mBTdevice, MY_UUID_INSECURE);
             }
         });
+        // Build up the LocationServices API client
+        // Uses the addApi method to request the LocationServices API
+        // Also uses enableAutoManage to automatically when to connect/suspend the client
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .addApi(Places.GEO_DATA_API)
+                .enableAutoManage(this, this)
+                .build();
+
+
     }
 
     private void startBTConnection(BluetoothDevice device, UUID uuid) {
 
         Log.d(Tag, "startBTConnection: Initializing RFCOM Bluetooth Connection.");
-        if (device==null) {
+        if (device == null) {
             Toast.makeText(this, "Choose device ", Toast.LENGTH_SHORT).show();
             connect.setChecked(false);
-        }
-        else {
+        } else {
             mBluetoothConnectionService.startClient(device, uuid);
         }
 
 
     }
+
     private void testBluetoothStatue(Context context, Intent intent) {
         String action = intent.getAction();
         if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
@@ -155,7 +199,7 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
             BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
             //if (!DevicesList.contains(device))
             DevicesList.add(device);
-            adapter = new listDevicesAdapter(context,R.layout.list_devices,DevicesList);
+            adapter = new listDevicesAdapter(context, R.layout.list_devices, DevicesList);
 
             // Apply the adapter to the listview
             listDeviceView.setAdapter(adapter);
@@ -163,6 +207,7 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
 
         }
     }
+
     private void changeBluetooth() {
 
         if (menuItem.isChecked()) {
@@ -190,42 +235,40 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
     private void scanDevices() {
 
         // Cancel discovery because it otherwise slows down the connection.
-        if(mBluetoothAdapter.isDiscovering())
-        {
+        if (mBluetoothAdapter.isDiscovering()) {
             mBluetoothAdapter.cancelDiscovery();
             mBluetoothAdapter.startDiscovery();
-            IntentFilter decoverDevicesIntent= new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(mReceiver,decoverDevicesIntent);
-        }
-        else
-        {
+            IntentFilter decoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            registerReceiver(mReceiver, decoverDevicesIntent);
+        } else {
             // to check manifest permission
             /* checkBTPermission();*/
             // need permission if api greater than lollipop
-            Log.d(Tag,"listDevice");
+            Log.d(Tag, "listDevice");
             mBluetoothAdapter.startDiscovery();
-            IntentFilter decoverDevicesIntent= new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            registerReceiver(mReceiver,decoverDevicesIntent);
+            IntentFilter decoverDevicesIntent = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            registerReceiver(mReceiver, decoverDevicesIntent);
         }
         Snackbar.make(getWindow().getDecorView().findViewById(android.R.id.content), "Scanning", Snackbar.LENGTH_LONG).show();
 
     }
+
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int i, long id) {
         mBluetoothAdapter.cancelDiscovery();
         String name = DevicesList.get(i).getName();
-        String  address = DevicesList.get(i).getAddress();
-        Log.d(Tag,"name "+name + "address"+address);
+        String address = DevicesList.get(i).getAddress();
+        Log.d(Tag, "name " + name + "address" + address);
 
         // to check version must greater than jelly bean (not important her)
-        if(Build.VERSION.SDK_INT>Build.VERSION_CODES.JELLY_BEAN_MR2)
-        {
-            Log.d(Tag,"Trying to pairing with "+name);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            Log.d(Tag, "Trying to pairing with " + name);
             DevicesList.get(i).createBond();
-            mBTdevice =DevicesList.get(i);
+            mBTdevice = DevicesList.get(i);
         }
-        mBluetoothConnectionService= new BluetoothConnectionService(this);
+        mBluetoothConnectionService = new BluetoothConnectionService(this);
     }
+
     @Override
 
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -236,42 +279,102 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
         }
         return super.onOptionsItemSelected(item);
     }
+
     public void sendToserver(String incomingMessage) {
-        int magnitude=Integer.parseInt(incomingMessage);
-        String messageTitle =null;
-        String messagebody =null;
-        if((magnitude>=6&&magnitude<10)||(magnitude>=11&&magnitude<=14))
-        {
-            messageTitle=getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[0];
-            messagebody=getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[1];
-        }
-        else if((magnitude>=4&&magnitude<6)||(magnitude>=15&&magnitude<=16))
-        {
-            messageTitle=getResources().getStringArray(R.array.or5or4or15or16)[0];
-            messagebody=getResources().getStringArray(R.array.or5or4or15or16)[1];
+        int magnitude = Integer.parseInt(incomingMessage);
+        String messageTitle = null;
+        String messagebody = null;
+        if ((magnitude >= 6 && magnitude < 10) || (magnitude >= 11 && magnitude <= 14)) {
+            messageTitle = getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[0];
+            messagebody = getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[1];
+        } else if ((magnitude >= 4 && magnitude < 6) || (magnitude >= 15 && magnitude <= 16)) {
+            messageTitle = getResources().getStringArray(R.array.or5or4or15or16)[0];
+            messagebody = getResources().getStringArray(R.array.or5or4or15or16)[1];
+
+        } else if ((magnitude == 3) || (magnitude == 17)) {
+            messageTitle = getResources().getStringArray(R.array.or3or17)[0];
+            messagebody = getResources().getStringArray(R.array.or3or17)[1];
+
+        } else if ((magnitude == 1 || magnitude == 2) || (magnitude == 18 || magnitude == 19)) {
+            messageTitle = getResources().getStringArray(R.array.or2or1or18or19)[0];
+            messagebody = getResources().getStringArray(R.array.or2or1or18or19)[1];
+
+        } else if ((magnitude == 0 || magnitude >= 20)) {
+            messageTitle = getResources().getStringArray(R.array.or0or20ormorethan20)[0];
+            messagebody = getResources().getStringArray(R.array.or0or20ormorethan20)[1];
 
         }
-        else if((magnitude==3)||(magnitude == 17))
-        {
-            messageTitle=getResources().getStringArray(R.array.or3or17)[0];
-            messagebody=getResources().getStringArray(R.array.or3or17)[1];
-
-        }
-        else if((magnitude==1||magnitude==2)||(magnitude==18||magnitude==19))
-        {
-            messageTitle=getResources().getStringArray(R.array.or2or1or18or19)[0];
-            messagebody=getResources().getStringArray(R.array.or2or1or18or19)[1];
-
-        }
-        else if((magnitude==0||magnitude>=20))
-        {
-            messageTitle=getResources().getStringArray(R.array.or0or20ormorethan20)[0];
-            messagebody=getResources().getStringArray(R.array.or0or20ormorethan20)[1];
-
-        }
-        Earthquake earthquake = new Earthquake(magnitude,null,messageTitle,messagebody);
+        Earthquake earthquake = new Earthquake(magnitude, null, messageTitle, messagebody);
         myRef.child("EarthQuake").setValue(earthquake);
 
     }
 
+
+
+    @Override
+    public void onConnected(@Nullable Bundle connectionHint) {
+
+
+    }
+
+    /***
+     * Called when the Google API Client is suspended
+     *
+     * @param cause cause The reason for the disconnection. Defined by constants CAUSE_*.
+     */
+    @Override
+    public void onConnectionSuspended(int cause) {
+        Log.i(Tag, "API Client Connection Suspended!");
+        mGoogleApiClient.connect();
+
+    }
+
+    /***
+     * Called when the Google API Client failed to connect to Google Play Services
+     *
+     * @param result A ConnectionResult that can be used for resolving the error
+     */
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult result) {
+        Log.e(Tag, "API Client Connection Failed!");
+    }
+
+    public void getLocation(View view) {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "need_location_permission_message", Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            // Start a new Activity for the Place Picker API, this will trigger {@code #onActivityResult}
+            // when a place is selected or with the user cancels.
+            PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+            Intent i = builder.build(this);
+            startActivityForResult(i, PLACE_PICKER_REQUEST);
+        } catch (GooglePlayServicesRepairableException e) {
+            Log.e(Tag, String.format("GooglePlayServices Not Available [%s]", e.getMessage()));
+        } catch (GooglePlayServicesNotAvailableException e) {
+            Log.e(Tag, String.format("GooglePlayServices Not Available [%s]", e.getMessage()));
+        } catch (Exception e) {
+            Log.e(Tag, String.format("PlacePicker Exception: %s", e.getMessage()));
+        }
+    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_PICKER_REQUEST && resultCode == RESULT_OK) {
+            Place place = PlacePicker.getPlace(this, data);
+            if (place == null) {
+                Log.i(Tag, "No place selected");
+                return;
+            }
+
+            // Extract the place information from the API
+            String placeName = place.getName().toString();
+            String placeAddress = place.getAddress().toString();
+            String placeID = place.getId();
+            Log.i(Tag,placeAddress);
+
+
+
+        }
+    }
 }

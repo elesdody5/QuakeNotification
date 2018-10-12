@@ -30,21 +30,24 @@
                 android:theme="@style/ThemeOverlay.AppCompat.ActionBar" />
 
 
-
-
             <Switch
                 android:id="@+id/connect_switch"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/start_connection" />
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="2"
-                android:text="@string/information"
-                android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimary"
+                android:onClick="getLocation"
+                android:text="Add Location" />
 
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:src="@drawable/powered_by_google_light" />
         </LinearLayout>
 
     </FrameLayout>
