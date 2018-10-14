@@ -4,16 +4,22 @@ package com.example.android.quakenotification;
  * Created by mohamed on 10/4/2018.
  */
 
-public class Earhquake {
+public class Earthquake {
   private  int magnitude ;
   private  String location;
+  private String title;
   private  String body ;
-  public  Earhquake()
-  {}
-    public Earhquake(int magnitude, String location, String body) {
+
+    public Earthquake(int magnitude, String location, String title, String body) {
+
+
+
+
         this.magnitude = magnitude;
         this.location = location;
+        this.title=title;
         this.body = body;
+
     }
 
     public int getMagnitude() {
@@ -26,5 +32,9 @@ public class Earhquake {
 
     public String getBody() {
         return body;
+    }
+
+    public String getTitle() {
+        return title;
     }
 }

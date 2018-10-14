@@ -11,7 +11,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 
 /**
  * Created by mohamed on 10/4/2018.
@@ -24,7 +23,7 @@ public class NotificationUtilites {
     private final static  int INTENT_CODE=15;
 
 
-    static void showNotification(Earhquake earhquake, Context context)
+    static void showNotification(Earthquake earthquake, Context context)
     {
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {
@@ -35,13 +34,13 @@ public class NotificationUtilites {
         Intent intent =new Intent(context,MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(context,INTENT_CODE,intent,PendingIntent.FLAG_UPDATE_CURRENT);
         Notification notification = new NotificationCompat.Builder(context,String.valueOf(NOTIFICATION_ID))
-                .setLargeIcon(getIconBitmap(R.drawable.ic_earthquake,context))
-                .setSmallIcon(R.drawable.ic_earthquake)
+                .setLargeIcon(getIconBitmap(R.mipmap.notification_layer,context))
+                .setSmallIcon(R.mipmap.notification_layer)
                 .setChannelId(NOTIFICATION_CHANNEL_ID)
-                .setContentTitle(earhquake.getLocation())
-                .setContentText(earhquake.getBody())
+                .setContentTitle(earthquake.getTitle())
+                .setContentText(earthquake.getBody())
                 .setAutoCancel(true)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(earhquake.getBody()))
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(earthquake.getBody()))
                 .setContentIntent(pendingIntent)
                 .build();
       mNotificationManager.notify(NOTIFICATION_ID,notification);

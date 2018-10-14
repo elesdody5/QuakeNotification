@@ -6,14 +6,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
@@ -22,9 +26,16 @@ import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.Switch;
-import android.support.design.widget.Snackbar;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -34,12 +45,24 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity  implements AdapterView.OnItemClickListener {
+
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener {
     private static final String Tag = MainActivity.class.getSimpleName();
+
     BluetoothAdapter mBluetoothAdapter;
     private MenuItem menuItem;
+    private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 111;
+    private GoogleApiClient mGoogleApiClient;
+    private static final int PLACE_PICKER_REQUEST = 1;
+
+
+
+
+
     private FirebaseDatabase mDatabase;
     private DatabaseReference mDatabaseReference;
+
     Switch connect;
     private ArrayList<BluetoothDevice> DevicesList;
     private ListView listDeviceView;
@@ -51,6 +74,9 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
     private static final UUID MY_UUID_INSECURE =
             UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
     private BluetoothDevice mBTdevice;
+
+
+
 
     // Create a BroadcastReceiver for ACTION_FOUND.
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -72,10 +98,21 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // to check location permission
+        ActivityCompat.requestPermissions(MainActivity.this,
+                new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                PERMISSIONS_REQUEST_FINE_LOCATION);
+        DevicesList = new ArrayList<>();
+
         createFireBaseDataBase();
         DevicesList = new ArrayList<>();
+
         connect = findViewById(R.id.connect_switch);
         mDrawerLayout = findViewById(R.id.drawer_layout);
+        listDeviceView = findViewById(R.id.list_device_view);
+
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ActionBar actionbar = getSupportActionBar();
@@ -120,6 +157,18 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
                     startBTConnection(mBTdevice, MY_UUID_INSECURE);
             }
         });
+        // Build up the LocationServices API client
+        // Uses the addApi method to request the LocationServices API
+        // Also uses enableAutoManage to automatically when to connect/suspend the client
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .addApi(Places.GEO_DATA_API)
+                .enableAutoManage(this, this)
+                .build();
+
+
     }
 
     private void startBTConnection(BluetoothDevice device, UUID uuid) {
@@ -222,19 +271,127 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
             Log.d(Tag, "Trying to pairing with " + name);
             DevicesList.get(i).createBond();
+
             mBTdevice = DevicesList.get(i);
         }
         mBluetoothConnectionService = new BluetoothConnectionService(this);
     }
 
+    @Override
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                mDrawerLayout.openDrawer(GravityCompat.START);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    public void sendToserver(String incomingMessage) {
+        int magnitude = Integer.parseInt(incomingMessage);
+        String messageTitle = null;
+        String messagebody = null;
+        if ((magnitude >= 6 && magnitude < 10) || (magnitude >= 11 && magnitude <= 14)) {
+            messageTitle = getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[0];
+            messagebody = getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[1];
+        } else if ((magnitude >= 4 && magnitude < 6) || (magnitude >= 15 && magnitude <= 16)) {
+            messageTitle = getResources().getStringArray(R.array.or5or4or15or16)[0];
+            messagebody = getResources().getStringArray(R.array.or5or4or15or16)[1];
+
+        } else if ((magnitude == 3) || (magnitude == 17)) {
+            messageTitle = getResources().getStringArray(R.array.or3or17)[0];
+            messagebody = getResources().getStringArray(R.array.or3or17)[1];
+
+        } else if ((magnitude == 1 || magnitude == 2) || (magnitude == 18 || magnitude == 19)) {
+            messageTitle = getResources().getStringArray(R.array.or2or1or18or19)[0];
+            messagebody = getResources().getStringArray(R.array.or2or1or18or19)[1];
+
+        } else if ((magnitude == 0 || magnitude >= 20)) {
+            messageTitle = getResources().getStringArray(R.array.or0or20ormorethan20)[0];
+            messagebody = getResources().getStringArray(R.array.or0or20ormorethan20)[1];
+
+        }
+        Earthquake earthquake = new Earthquake(magnitude, null, messageTitle, messagebody);
+        mDatabaseReference.push().setValue(earthquake);
+
+    }
+
+
+
+    @Override
+    public void onConnected(@Nullable Bundle connectionHint) {
+
+
+    }
+
+    /***
+     * Called when the Google API Client is suspended
+     *
+     * @param cause cause The reason for the disconnection. Defined by constants CAUSE_*.
+     */
+    @Override
+    public void onConnectionSuspended(int cause) {
+        Log.i(Tag, "API Client Connection Suspended!");
+        mGoogleApiClient.connect();
+
+    }
+
+    /***
+     * Called when the Google API Client failed to connect to Google Play Services
+     *
+     * @param result A ConnectionResult that can be used for resolving the error
+     */
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult result) {
+        Log.e(Tag, "API Client Connection Failed!");
+    }
+
+    public void getLocation(View view) {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "need_location_permission_message", Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            // Start a new Activity for the Place Picker API, this will trigger {@code #onActivityResult}
+            // when a place is selected or with the user cancels.
+            PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+            Intent i = builder.build(this);
+            startActivityForResult(i, PLACE_PICKER_REQUEST);
+        } catch (GooglePlayServicesRepairableException e) {
+            Log.e(Tag, String.format("GooglePlayServices Not Available [%s]", e.getMessage()));
+        } catch (GooglePlayServicesNotAvailableException e) {
+            Log.e(Tag, String.format("GooglePlayServices Not Available [%s]", e.getMessage()));
+        } catch (Exception e) {
+            Log.e(Tag, String.format("PlacePicker Exception: %s", e.getMessage()));
+        }
+    }
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == PLACE_PICKER_REQUEST && resultCode == RESULT_OK) {
+            Place place = PlacePicker.getPlace(this, data);
+            if (place == null) {
+                Log.i(Tag, "No place selected");
+                return;
+            }
+
+            // Extract the place information from the API
+            String placeName = place.getName().toString();
+            String placeAddress = place.getAddress().toString();
+            String placeID = place.getId();
+            Log.i(Tag, placeAddress);
+
+
+        }
+
+    }
     private void createFireBaseDataBase() {
         mDatabase = FirebaseDatabase.getInstance();
         mDatabaseReference = mDatabase.getReference().child("earthquake");
-        mDatabaseReference.push().setValue(new Earhquake(5, "egypt", "high"));
         mChildEventListener = new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Earhquake earhquake = (Earhquake) dataSnapshot.getValue(Earhquake.class);
+                Earthquake earhquake = (Earthquake) dataSnapshot.getValue(Earthquake.class);
                 NotificationUtilites.showNotification(earhquake, MainActivity.this);
             }
 
@@ -259,6 +416,7 @@ public class MainActivity extends AppCompatActivity  implements AdapterView.OnIt
             }
         };
         mDatabaseReference.addChildEventListener(mChildEventListener);
+
     }
 }
 

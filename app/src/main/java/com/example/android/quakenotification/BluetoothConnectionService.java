@@ -37,10 +37,12 @@ public class BluetoothConnectionService {
     ProgressDialog mProgressDialog;
 
     private ConnectedThread mConnectedThread;
+    MainActivity mainActivity;
 
     public BluetoothConnectionService(Context context) {
         mContext = context;
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mainActivity = new MainActivity();
         start();
     }
 
@@ -256,6 +258,7 @@ public class BluetoothConnectionService {
                     bytes = mmInStream.read(buffer);
                     String incomingMessage = new String(buffer, 0, bytes);
                     Log.d(TAG, "InputStream: " + incomingMessage);
+                    mainActivity.sendToserver(incomingMessage);
                 } catch (IOException e) {
                     Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage() );
                     break;
@@ -282,6 +285,8 @@ public class BluetoothConnectionService {
         }
     }
 
+
+
     private void connected(BluetoothSocket mmSocket, BluetoothDevice mmDevice) {
         Log.d(TAG, "connected: Starting.");
 
@@ -305,7 +310,6 @@ public class BluetoothConnectionService {
         //perform the write
         mConnectedThread.write(out);
     }
-
 }
 
 
