@@ -11,6 +11,10 @@ public class Earthquake {
   private  String body ;
 
     public Earthquake(int magnitude, String location, String title, String body) {
+
+
+
+
         this.magnitude = magnitude;
         this.location = location;
         this.title=title;

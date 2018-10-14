@@ -1,27 +1,23 @@
 package com.example.android.quakenotification;
 
-import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
@@ -30,28 +26,30 @@ import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.Switch;
-import android.support.design.widget.Snackbar;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.location.places.ui.PlacePicker;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.UUID;
 
+
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener {
     private static final String Tag = MainActivity.class.getSimpleName();
+
     BluetoothAdapter mBluetoothAdapter;
     private MenuItem menuItem;
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 111;
@@ -61,18 +59,22 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
 
 
+
+    private FirebaseDatabase mDatabase;
+    private DatabaseReference mDatabaseReference;
+
     Switch connect;
     private ArrayList<BluetoothDevice> DevicesList;
     private ListView listDeviceView;
     listDevicesAdapter adapter;
     private DrawerLayout mDrawerLayout;
+    private ChildEventListener mChildEventListener;
+
     private BluetoothConnectionService mBluetoothConnectionService;
     private static final UUID MY_UUID_INSECURE =
             UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
     private BluetoothDevice mBTdevice;
-    // Write a message to the database
-    FirebaseDatabase database;
-    DatabaseReference myRef;
+
 
 
 
@@ -96,17 +98,22 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         // to check location permission
         ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                 PERMISSIONS_REQUEST_FINE_LOCATION);
         DevicesList = new ArrayList<>();
+
+        createFireBaseDataBase();
+        DevicesList = new ArrayList<>();
+
         connect = findViewById(R.id.connect_switch);
         mDrawerLayout = findViewById(R.id.drawer_layout);
         listDeviceView = findViewById(R.id.list_device_view);
+
+
         Toolbar toolbar = findViewById(R.id.toolbar);
-        database = FirebaseDatabase.getInstance();
-        myRef = database.getReference("message");
         setSupportActionBar(toolbar);
         ActionBar actionbar = getSupportActionBar();
         actionbar.setDisplayHomeAsUpEnabled(true);
@@ -139,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 });
         //Broadcast when bound state change (pairing)
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
-        listDeviceView.setOnItemClickListener(this);
+       listDeviceView.setOnItemClickListener(this);
         registerReceiver(mReceiver, filter);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -264,6 +271,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR2) {
             Log.d(Tag, "Trying to pairing with " + name);
             DevicesList.get(i).createBond();
+
             mBTdevice = DevicesList.get(i);
         }
         mBluetoothConnectionService = new BluetoothConnectionService(this);
@@ -305,7 +313,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         }
         Earthquake earthquake = new Earthquake(magnitude, null, messageTitle, messagebody);
-        myRef.child("EarthQuake").setValue(earthquake);
+        mDatabaseReference.push().setValue(earthquake);
 
     }
 
@@ -371,10 +379,44 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             String placeName = place.getName().toString();
             String placeAddress = place.getAddress().toString();
             String placeID = place.getId();
-            Log.i(Tag,placeAddress);
-
+            Log.i(Tag, placeAddress);
 
 
         }
+
+    }
+    private void createFireBaseDataBase() {
+        mDatabase = FirebaseDatabase.getInstance();
+        mDatabaseReference = mDatabase.getReference().child("earthquake");
+        mChildEventListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Earthquake earhquake = (Earthquake) dataSnapshot.getValue(Earthquake.class);
+                NotificationUtilites.showNotification(earhquake, MainActivity.this);
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        };
+        mDatabaseReference.addChildEventListener(mChildEventListener);
+
     }
 }
+
