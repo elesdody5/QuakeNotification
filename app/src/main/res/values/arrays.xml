@@ -6,37 +6,60 @@
             " Small NOT dangerous earthquake is going to pass through your region in 15 minutes "
         </item>
         <item>
-            " Stay tuned for a moderate earthquake coming in 15 minutes don't worry just get ready "
-            • Predicted Effects Description - Felt indoors by some - Vibration similar to a passing truck - Not always recognized as an earthquake
+            " Stay tuned for a moderate earthquake coming in 15 minutes don't worry just get ready
+            "\n
+            • Predicted Effects Description - Felt indoors by some - Vibration similar to a passing\n
+              truck - Not always recognized as an earthquake
 
         </item>
     </array>
     <array name="or5or4or15or16">
         <item>
-            " Stay tuned for a moderate earthquake coming in 15 minutes don't worry just get ready " </item>
+            " Stay tuned for a moderate earthquake coming in 15 minutes don't worry just get ready "
+        </item>
         <item>
-            • Predicted Effects Description - Felt indoors by many, outdoors by few - Awakens some sleeping people - Dishes, windows, and doors rattle, walls creak - Standing cars rock - Hanging objects swing
+            • Predicted Effects Description - Felt indoors by many, outdoors by few - Awakens some
+               sleeping people -\n
+               Dishes, windows, and doors rattle, walls creak - Standing cars rock - Hanging objects
+               swing
 
         </item>
     </array>
     <array name="or3or17">
         <item>
-            " Major earthquake is coming to your region in 15 minutes stay under a table "        </item>
+            " Major earthquake is coming to your region in 15 minutes stay under a table "
+        </item>
         <item>
-            • Predicted Effects Description - Felt indoors by mostly everyone, outdoors by many - Awakens most sleeping people - Some dishes break, windows and plaster walls crack - Small unstable objects overturned - Hanging objects and doors swing considerably, pictures knocked out of plumb - Some liquid spilled from full containers
+          • Predicted Effects Description - Felt indoors by mostly everyone, outdoors by many -\n
+            Awakens most sleeping people - Some dishes break, windows and plaster walls crack -\n
+            Small unstable objects overturned - Hanging objects and doors swing considerably,\n
+            pictures knocked out of plumb - Some liquid spilled from full containers
         </item>
     </array>
     <array name="or2or1or18or19">
         <item>
-            " A great earthquake is coming to your region in 15 minutes evacuate the building and stay in the street "         </item>
+            "A great earthquake is coming to your region in 15 minutes evacuate the building and\n
+            stay in the street "
+        </item>
         <item>
-            • Predicted Effects Description - Felt by everyone - General excitement and some fear - Slight damage to poorly built structures - Considerable amount of glassware and windows broken - Some furniture overturned, and some heavy furniture moved - Pictures and books fall from walls and shelves - Some fallen plaster and damaged chimneys         </item>
+          • Predicted Effects Description - Felt by everyone - General excitement and some fear -\n
+            Slight damage to poorly built structures - Considerable amount of glassware and windows\n
+            broken - Some furniture overturned, and some heavy furniture moved - Pictures and books\n
+            fall from walls and shelves - Some fallen plaster and damaged chimneys
+        </item>
     </array>
     <array name="or0or20ormorethan20">
         <item>
-            " A super earthquake is coming to your region in 15 minutes evacuate the city and find some open area it will be less dangerous "         </item>
+            " A super earthquake is coming to your region in 15 minutes evacuate the city and find\n
+            some open area it will be less dangerous "
+        </item>
         <item>
-        • Predicted Effects Description - Severe damage to well-built wooden structures, most masonry structures and foundations destroyed, well-built brick walls cracked - Bridges severely damaged or destroyed - Ground severely cracked - Considerable landslides from steep slopes and riverbanks - Water splashes over banks of canals, rivers, and lakes - Underground pipes broken - Open cracks and wavy patterns in concrete and asphalt - Railroad tracks slightly bent
+            • Predicted Effects Description - Severe damage to well-built wooden structures, most\n
+            masonry structures and foundations destroyed, well-built brick walls cracked - Bridges\n
+            severely damaged or destroyed - Ground severely cracked - Considerable landslides from\n
+            steep slopes and riverbanks - Water splashes over banks of canals, rivers, and lakes -\n
+            Underground pipes broken - Open cracks and wavy patterns in concrete and asphalt -
+            Railroad tracks slightly bent
         </item>
     </array>
 </resources>

@@ -258,7 +258,8 @@ public class BluetoothConnectionService {
                     bytes = mmInStream.read(buffer);
                     String incomingMessage = new String(buffer, 0, bytes);
                     Log.d(TAG, "InputStream: " + incomingMessage);
-                    mainActivity.sendToserver(incomingMessage);
+                    mainActivity.sendToserver(mContext,incomingMessage,mainActivity.placeAddress);
+                    Log.d(TAG,mContext+"");
                 } catch (IOException e) {
                     Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage() );
                     break;

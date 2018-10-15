@@ -10,6 +10,10 @@ public class Earthquake {
   private String title;
   private  String body ;
 
+    public Earthquake() {
+
+    }
+
     public Earthquake(int magnitude, String location, String title, String body) {
 
 
