@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.RingtoneManager;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 
@@ -25,7 +26,7 @@ public class NotificationUtilites {
 
     static void showNotification(Earthquake earthquake, Context context)
     {
-        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.O) {
             NotificationChannel mChannel = new NotificationChannel(NOTIFICATION_CHANNEL_ID,NOTIFICATION_CHANNEL_NAME,NotificationManager.IMPORTANCE_HIGH);
             mNotificationManager.createNotificationChannel(mChannel);
@@ -42,6 +43,7 @@ public class NotificationUtilites {
                 .setAutoCancel(true)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(earthquake.getBody()))
                 .setContentIntent(pendingIntent)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .build();
       mNotificationManager.notify(NOTIFICATION_ID,notification);
 

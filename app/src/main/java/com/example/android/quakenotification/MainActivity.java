@@ -24,8 +24,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -55,13 +57,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private static final int PERMISSIONS_REQUEST_FINE_LOCATION = 111;
     private GoogleApiClient mGoogleApiClient;
     private static final int PLACE_PICKER_REQUEST = 1;
-
-
-
-
-
-    private FirebaseDatabase mDatabase;
-    private DatabaseReference mDatabaseReference;
+    private static FirebaseDatabase mDatabase;
+    private static DatabaseReference mDatabaseReference;
+    private LinearLayout mPlaceContainer;
+    private TextView mPlaceTextView;
+    private View detailsView;
+    private TextView magnitude;
+    private TextView title;
+    private TextView body;
+    private String placeAddress = "";
 
     Switch connect;
     private ArrayList<BluetoothDevice> DevicesList;
@@ -98,14 +102,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // to check location permission
+        bindingLayout();
+        createFireBaseDataBase();
+        if (placeAddress.equals("")) {
+            mPlaceContainer.setVisibility(View.VISIBLE);
+            mPlaceTextView.setText(placeAddress);
+        }// to check location permission
         ActivityCompat.requestPermissions(MainActivity.this,
                 new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                 PERMISSIONS_REQUEST_FINE_LOCATION);
         DevicesList = new ArrayList<>();
 
-        createFireBaseDataBase();
+
         DevicesList = new ArrayList<>();
 
         connect = findViewById(R.id.connect_switch);
@@ -169,6 +177,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 .build();
 
 
+    }
+
+    private void bindingLayout() {
+        mPlaceContainer = findViewById(R.id.place_info_container);
+        mPlaceTextView = findViewById(R.id.place_name_tv);
+        detailsView = findViewById(R.id.details_container);
+        magnitude = detailsView.findViewById(R.id.magnitude);
+        title = detailsView.findViewById(R.id.title);
+        body = detailsView.findViewById(R.id.body);
     }
 
     private void startBTConnection(BluetoothDevice device, UUID uuid) {
@@ -288,33 +305,36 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         return super.onOptionsItemSelected(item);
     }
 
-    public void sendToserver(String incomingMessage) {
+    public void sendToserver(Context mContext, String incomingMessage) {
         int magnitude = Integer.parseInt(incomingMessage);
-        String messageTitle = null;
-        String messagebody = null;
+        String messageTitle = "";
+        String messagebody = "";
         if ((magnitude >= 6 && magnitude < 10) || (magnitude >= 11 && magnitude <= 14)) {
-            messageTitle = getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[0];
-            messagebody = getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[1];
+//            Log.w(Tag,getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[0]);
+            messageTitle = mContext.getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[0];
+            messagebody = mContext.getResources().getStringArray(R.array.or9or8or7or6or11or12or13or14)[1];
         } else if ((magnitude >= 4 && magnitude < 6) || (magnitude >= 15 && magnitude <= 16)) {
-            messageTitle = getResources().getStringArray(R.array.or5or4or15or16)[0];
-            messagebody = getResources().getStringArray(R.array.or5or4or15or16)[1];
+            messageTitle = mContext.getResources().getStringArray(R.array.or5or4or15or16)[0];
+            messagebody = mContext.getResources().getStringArray(R.array.or5or4or15or16)[1];
 
         } else if ((magnitude == 3) || (magnitude == 17)) {
-            messageTitle = getResources().getStringArray(R.array.or3or17)[0];
-            messagebody = getResources().getStringArray(R.array.or3or17)[1];
+            messageTitle = mContext.getResources().getStringArray(R.array.or3or17)[0];
+            messagebody = mContext.getResources().getStringArray(R.array.or3or17)[1];
 
         } else if ((magnitude == 1 || magnitude == 2) || (magnitude == 18 || magnitude == 19)) {
-            messageTitle = getResources().getStringArray(R.array.or2or1or18or19)[0];
-            messagebody = getResources().getStringArray(R.array.or2or1or18or19)[1];
+            messageTitle = mContext.getResources().getStringArray(R.array.or2or1or18or19)[0];
+            messagebody = mContext.getResources().getStringArray(R.array.or2or1or18or19)[1];
 
         } else if ((magnitude == 0 || magnitude >= 20)) {
-            messageTitle = getResources().getStringArray(R.array.or0or20ormorethan20)[0];
-            messagebody = getResources().getStringArray(R.array.or0or20ormorethan20)[1];
+            messageTitle = mContext.getResources().getStringArray(R.array.or0or20ormorethan20)[0];
+            messagebody = mContext.getResources().getStringArray(R.array.or0or20ormorethan20)[1];
 
         }
-        Earthquake earthquake = new Earthquake(magnitude, null, messageTitle, messagebody);
+        Earthquake earthquake = new Earthquake(magnitude, placeAddress, messageTitle, messagebody);
+        if (!placeAddress.equals(""))
         mDatabaseReference.push().setValue(earthquake);
-
+        else
+            Toast.makeText(mContext, "Please Add Location", Toast.LENGTH_SHORT).show();
     }
 
 
@@ -377,22 +397,34 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
             // Extract the place information from the API
             String placeName = place.getName().toString();
-            String placeAddress = place.getAddress().toString();
+            String Address = place.getAddress().toString();
             String placeID = place.getId();
-            Log.i(Tag, placeAddress);
+            placeAddress = Address;
+            mPlaceContainer.setVisibility(View.VISIBLE);
+            mPlaceTextView.setText(placeAddress);
 
 
         }
 
     }
+
     private void createFireBaseDataBase() {
+
         mDatabase = FirebaseDatabase.getInstance();
         mDatabaseReference = mDatabase.getReference().child("earthquake");
         mChildEventListener = new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                Earthquake earhquake = (Earthquake) dataSnapshot.getValue(Earthquake.class);
-                NotificationUtilites.showNotification(earhquake, MainActivity.this);
+                Earthquake earhquake = dataSnapshot.getValue(Earthquake.class);
+                if (earhquake.getLocation().equals(placeAddress)) {
+                    NotificationUtilites.showNotification(earhquake, MainActivity.this);
+
+                    detailsView.setVisibility(View.VISIBLE);
+                    magnitude.setText(earhquake.getMagnitude() + "");
+                    title.setText(earhquake.getTitle() + "");
+                    body.setText(earhquake.getBody() + "");
+
+                }
             }
 
             @Override
@@ -417,6 +449,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         };
         mDatabaseReference.addChildEventListener(mChildEventListener);
 
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("place", placeAddress);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        placeAddress = savedInstanceState.getString("place");
     }
 }
 

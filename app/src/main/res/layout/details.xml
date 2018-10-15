@@ -10,7 +10,6 @@
         android:id="@+id/magnitude"
         android:layout_width="40dp"
         android:layout_height="40dp"
-
         android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
         android:background="@drawable/magnitude_circle"
@@ -27,30 +26,31 @@
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginTop="28dp"
         android:ellipsize="end"
         android:maxLines="2"
         android:textColor="@color/textColorEarthquakeLocation"
         android:textSize="16sp"
         android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/magnitude"
         app:layout_constraintTop_toBottomOf="@+id/magnitude"
-        tools:text="Long " />
+        tools:text="@string/title" />
 
     <TextView
         android:id="@+id/body"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="56dp"
+        android:layout_marginTop="28dp"
         android:ellipsize="end"
-        android:maxLines="2"
+        android:maxLines="8"
         android:textColor="@color/textColorEarthquakeLocation"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title"
-        tools:text="Long placeholder location that should wrap to more than 2 lines of text" />
+        tools:text="@string/body" />
 
 
 </android.support.constraint.ConstraintLayout>

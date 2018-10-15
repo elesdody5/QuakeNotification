@@ -39,28 +39,40 @@
             <Button
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:background="@color/colorPrimary"
                 android:onClick="getLocation"
-                android:text="Add Location" />
+                android:text="Add Location"
+                android:textAppearance="@style/TextAppearance.AppCompat.Button"
+                android:textColor="@android:color/white" />
+
             <LinearLayout
+                android:id="@+id/place_info_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:visibility="invisible">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                tools:text="Menof ,elmnofia , Egypt"
-                android:layout_weight="2"
-                android:textSize="20sp"
-                android:textColor="@color/textColorEarthquakeLocation"/>
+
+                <TextView
+                    android:id="@+id/place_name_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:textColor="@color/textColorEarthquakeLocation"
+                    android:textSize="20sp"
+                    tools:text="Menof ,elmnofia , Egypt" />
+
                 <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:src="@drawable/ic_location_on_black_24dp"/>
+                    android:src="@drawable/ic_location_on_black_24dp" />
             </LinearLayout>
-<include
-    layout="@layout/details"/>
+
+            <include
+                android:id="@+id/details_container"
+                layout="@layout/details"
+                android:visibility="invisible" />
+
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -82,21 +94,21 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:fitsSystemWindows="true"
-            app:menu="@menu/bluetooth_settings"
-            app:headerLayout="@layout/navigation_view_header">
+            app:headerLayout="@layout/navigation_view_header"
+            app:menu="@menu/bluetooth_settings">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/marginLeft"
                 android:layout_marginTop="@dimen/listview_margin_top"
-                android:orientation="vertical"
-                android:layout_marginLeft="@dimen/marginLeft">
+                android:orientation="vertical">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/devices_found"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Body2"/>
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body2" />
 
                 <ListView
                     android:id="@+id/list_device_view"

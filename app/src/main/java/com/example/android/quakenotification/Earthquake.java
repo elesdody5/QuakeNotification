@@ -22,6 +22,10 @@ public class Earthquake {
 
     }
 
+    public Earthquake() {
+
+    }
+
     public int getMagnitude() {
         return magnitude;
     }
