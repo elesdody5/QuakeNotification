@@ -6,9 +6,4 @@
     <string name="devices_found">Devices Found:</string>
     <string name="information"> Information: </string>
     <string name="bluetooth_setting">Bluetooth Setting </string>
-    <string name="title">"Small NOT dangerous earthquake is going to pass through your region in 15 minutes "</string>
-    <string name="body">"Stay tuned for a moderate earthquake coming in 15 minutes don't worry just get ready "\n
-            • Predicted Effects Description - Felt indoors by some - Vibration similar to a passing
-            truck - Not always recognized as an earthquake
-</string>
 </resources>
